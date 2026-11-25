@@ -1,11 +1,11 @@
 # Pharmacy Stock Availability API - Set A
 
 > Note From Candidate (Almas): 
-**AI assistance note:** This assessment was completed with the Help of GitHub Copilot using the Copilot SDK in VS Code.
+**AI assistance note:** This assessment was completed with the Help of GitHub Copilot using the Copilot SDK in VS Code The Candidate ( ME ) Did use it to Save time and Write Documentation.
 
 ## Prerequisites
 
-Linux or WSL2, Git, Python 3.10+, Docker with Compose, Terraform CLI, and kubectl with kind or minikube.
+Linux or WSL2, Git, Python 3.10+, Docker with Compose, Terraform CLI, kubectl, and k3s.
 
 ## Linux and Git
 
@@ -18,17 +18,6 @@ chmod +x scripts/analyze_logs.sh
 
 Exact fixture commands and the derived result are in `evidence/linux-log-analysis.txt`.
 
-Create a branch and commit completed work:
-
-```sh
-git switch -c assessment/set-a
-git add .
-git diff --cached --stat
-git -c user.name="Candidate" -c user.email="candidate@example.com" commit -m "Complete Set A DevOps assessment"
-```
-
-Do not commit `.terraform/`, `*.tfstate*`, `generated/service.env`, credentials, or tokens.
-
 ## Python
 
 ```sh
@@ -37,21 +26,6 @@ python3 -m app.server
 ```
 
 Stop with Ctrl+C. The server listens on `127.0.0.1:8080`.
-
-## Docker Compose
-
-Generate `generated/service.env` first (see Terraform below), then:
-
-```sh
-docker compose up --build -d
-curl -i http://127.0.0.1:8080/healthz
-curl -i http://127.0.0.1:8080/readyz
-curl -i 'http://127.0.0.1:8080/api/stock?sku=MED-101'
-docker compose logs --tail=100
-docker compose down
-```
-
-The Dockerfile runs as UID 10001 and probes `/healthz`.
 
 ## CI
 
@@ -69,38 +43,76 @@ git restore tests/test_server.py
 
 ## Terraform
 
-Run from `infra/`:
+Terraform must run before Docker Compose and Kubernetes image demos because it generates `generated/service.env`.
+Run these commands from the project root:
 
 ```sh
-cd infra
-terraform fmt
-terraform init
-terraform validate
-terraform plan -var-file=dev.tfvars.example
-terraform apply -auto-approve -var-file=dev.tfvars.example
-cd ..
+terraform -chdir=infra fmt
+terraform -chdir=infra init
+terraform -chdir=infra validate
+terraform -chdir=infra plan -var-file=dev.tfvars.example
+terraform -chdir=infra apply -auto-approve -var-file=dev.tfvars.example
 ```
 
 This creates `generated/service.env`. It is ignored and must remain uncommitted.
 
+## Docker Compose
+
+After Terraform successfully creates `generated/service.env`, run:
+
+```sh
+docker compose up --build -d
+curl -i http://127.0.0.1:8080/healthz
+curl -i http://127.0.0.1:8080/readyz
+curl -i 'http://127.0.0.1:8080/api/stock?sku=MED-101'
+docker compose ps
+docker compose logs --tail=100
+docker compose down
+```
+
+The Dockerfile runs as UID 10001 and probes `/healthz`.
+
 ## Kubernetes
 
-Build and load the image into kind:
+Build the local image and install/start k3s. If k3s is not already installed, use the official k3s installer:
 
 ```sh
 docker build -t pharmacy-stock:local .
-kind create cluster --name assessment
-kind load docker-image pharmacy-stock:local --name assessment
+curl -sfL https://get.k3s.io | sh -
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+sudo chmod 600 "$KUBECONFIG"
+docker save pharmacy-stock:local | sudo k3s ctr images import -
+kubectl get nodes
+```
+
+The first k3s server start can take a few seconds. If `kubectl` reports permission errors, run k3s commands with
+`sudo` or keep the exported `KUBECONFIG` above.
+
+Deploy the resources:
+
+```sh
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
 kubectl -n devops-assessment rollout status deployment/pharmacy-stock
-kubectl -n devops-assessment get pods
+kubectl -n devops-assessment get pods -o wide
+```
+
+Access the internal Service in a separate terminal:
+
+```sh
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 kubectl -n devops-assessment port-forward service/pharmacy-stock 8080:80
 ```
 
-With port-forward running, call `http://127.0.0.1:8080/healthz`, `/readyz`, and the stock endpoint.
+With port-forward running, call:
+
+```sh
+curl -i http://127.0.0.1:8080/healthz
+curl -i http://127.0.0.1:8080/readyz
+curl -i 'http://127.0.0.1:8080/api/stock?sku=MED-101'
+```
 
 Controlled bad rollout:
 
@@ -126,8 +138,8 @@ For cleanup:
 
 ```sh
 kubectl delete namespace devops-assessment
-kind delete cluster --name assessment
 docker compose down
+sudo /usr/local/bin/k3s-uninstall.sh
 ```
 
 ## Monitoring and recovery
