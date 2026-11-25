@@ -4,6 +4,6 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-.env
+*.env  
 generated/service.env
 evidence/*.log
