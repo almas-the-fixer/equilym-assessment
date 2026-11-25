@@ -1,0 +1,26 @@
+Acceptance check results
+
+PASS python3 -m compileall -q app tests
+PASS python3 -m unittest discover -s tests -v (7 tests)
+
+PASS ./scripts/analyze_logs.sh logs/access.log
+PASS missing log-file check (exit status 1)
+
+PASS terraform fmt -check
+PASS terraform init
+PASS terraform validate
+PASS terraform plan -var-file=dev.tfvars.example
+PASS terraform apply -var-file=dev.tfvars.example
+
+PASS docker compose up --build -d --pull never
+PASS GET /healthz: HTTP 200
+PASS GET /readyz: HTTP 200
+PASS GET /api/stock?sku=MED-101: HTTP 200
+PASS container UID: 10001
+PASS docker compose logs
+PASS docker compose down
+
+PASS kubectl apply --dry-run=client for all four Kubernetes manifests
+
+NOT EXECUTED: kind/minikube live cluster rollout and port-forward because kind/minikube were unavailable.
+NOT EXECUTED: GitHub Actions workflow run outside GitHub.
