@@ -1,7 +1,7 @@
 # Pharmacy Stock Availability API - Set A
 
 > Note From Candidate (Almas): 
-**AI assistance note:** This assessment was completed with GitHub Copilot using the Copilot SDK in VS Code.
+**AI assistance note:** This assessment was completed with the Help of GitHub Copilot using the Copilot SDK in VS Code.
 
 ## Prerequisites
 
