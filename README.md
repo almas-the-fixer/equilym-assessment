@@ -1,5 +1,8 @@
 # Pharmacy Stock Availability API - Set A
 
+> Note From Candidate (Almas): 
+**AI assistance note:** This assessment was completed with GitHub Copilot using the Copilot SDK in VS Code.
+
 ## Prerequisites
 
 Linux or WSL2, Git, Python 3.10+, Docker with Compose, Terraform CLI, and kubectl with kind or minikube.
