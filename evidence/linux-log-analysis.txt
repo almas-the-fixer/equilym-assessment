@@ -1,0 +1,12 @@
+Command:
+./scripts/analyze_logs.sh logs/access.log
+
+Fixture result:
+Total requests: 24
+HTTP 4xx: 4
+HTTP 5xx: 2
+HTTP 5xx rate: 8.33%
+Three most common routes:
+8 /healthz
+6 /api/stock
+5 /readyz

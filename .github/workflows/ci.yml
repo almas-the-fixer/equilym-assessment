@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Check Python syntax
+        run: python3 -m compileall -q app tests
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Set commit-derived image tag
+        run: echo "IMAGE_TAG=pharmacy-stock:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Build Docker image
+        run: docker build --tag "$IMAGE_TAG" .

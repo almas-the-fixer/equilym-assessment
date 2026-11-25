@@ -1,0 +1,11 @@
+.git
+.github
+.terraform
+*.tfstate
+*.tfstate.*
+__pycache__
+*.pyc
+.pytest_cache
+evidence
+generated
+logs
